@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Tarefas</title>
+  <link rel="icon" type="icon.png" href="icon.png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      text-align: center;
+    }
+
+    p {
+      font-size: 18px;
+    }
+
+    @media screen and (max-width: 600px) {
+      h1 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 16px;
+      }
+    }
+
+    .task-input {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .task-input input {
+      flex-grow: 1;
+      padding: 5px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .task-input button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .task-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .task-list li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .task-list li input {
+      margin-right: 10px;
+    }
+
+    .task-list li span {
+      flex-grow: 1;
+      text-decoration: none; /* Inicialmente, sem decoração */
+    }
+
+    .task-list li.completed span {
+      text-decoration: line-through; /* Riscar texto quando concluído */
+    }
+
+    .task-list li button {
+      margin-left: 5px; /* Ajuste na margem do botão */
+      padding: 3px 8px;
+      font-size: 14px;
+      background-color: #f44336;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .cookie-consent {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      display: none;
+    }
+
+    .cookie-consent button {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .remove-cookies-button {
+      margin-top: 20px;
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #f44336;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .image-and-button-container {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .image-and-button-container img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-and-button-container button {
+      margin-top: 10px;
+    }
+
+    .confirmation-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    .confirmation-popup button {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4435645017351751"
+     crossorigin="anonymous"></script>
+  <meta name="google-adsense-account" content="ca-pub-4435645017351751">
+</head>
+<body>
+  <h1>Lista de Tarefas</h1>
+
+  <div class="task-input">
+    <input type="text" id="task-text" placeholder="Digite uma tarefa">
+    <button onclick="addTask()">Adicionar</button>
+  </div>
+
+  <ul class="task-list" id="task-list"></ul>
+
+  <div class="cookie-consent" id="cookieConsent">
+    Este site utiliza cookies. 
+    <button onclick="acceptCookies()">Aceitar Cookies</button>
+    <button onclick="showCookieInfo()">Por que Cookies?</button>
+  </div>
+
+  <p><code>&copy; Pug Corporation 2024</code></p>
+
+  <!-- Contêiner para a imagem e o botão "Remover Cookies" -->
+  <div class="image-and-button-container">
+    <img src="logo.png" alt="Logo">
+    <button class="remove-cookies-button" onclick="showConfirmationPopup()">Remover Cookies</button>
+  </div>
+
+  <div class="confirmation-popup" id="confirmationPopup">
+    <p>Você realmente deseja apagar todas as tarefas?</p>
+    <button onclick="removeCookies()">Sim</button>
+    <button onclick="hideConfirmationPopup()">Não</button>
+  </div>
+
+  <script>
+    const taskList = document.getElementById('task-list');
+    const taskText = document.getElementById('task-text');
+    let tasks = [];
+
+    function addTask() {
+      const task = taskText.value.trim();
+      if (task !== '') {
+        tasks.push({ text: task, completed: false });
+        saveTasks();
+        renderTasks();
+        taskText.value = '';
+      }
+    }
+
+    function removeTask(index) {
+      tasks.splice(index, 1);
+      saveTasks();
+      renderTasks();
+    }
+
+    function toggleTaskCompletion(index) {
+      tasks[index].completed = !tasks[index].completed;
+      saveTasks();
+      renderTasks();
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.classList.toggle('completed', task.completed);
+        li.innerHTML = `
+          <input type="checkbox" onclick="toggleTaskCompletion(${index})" ${task.completed ? 'checked' : ''}>
+          <span>${task.text}</span>
+          <button onclick="removeTask(${index})">Remover</button>
+        `;
+        taskList.appendChild(li);
+      });
+    }
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const savedTasks = localStorage.getItem('tasks');
+      if (savedTasks !== null) {
+        tasks = JSON.parse(savedTasks);
+        renderTasks();
+      }
+    }
+
+    function acceptCookies() {
+      document.getElementById('cookieConsent').style.display = 'none';
+      localStorage.setItem('acceptedCookies', 'true');
+      loadTasks(); // Carregar as tarefas após aceitar os cookies
+    }
+
+    function showCookieInfo() {
+      // Abrir uma nova aba com a página de informações sobre cookies
+      window.open('porque.html', '_blank');
+    }
+
+    function showConfirmationPopup() {
+      document.getElementById('confirmationPopup').style.display = 'block';
+    }
+
+    function hideConfirmationPopup() {
+      document.getElementById('confirmationPopup').style.display = 'none';
+    }
+
+    function removeCookies() {
+      tasks = [];
+      saveTasks();
+      hideConfirmationPopup();
+      localStorage.removeItem('acceptedCookies'); // Remover a marcação de aceitação de cookies
+      document.getElementById('cookieConsent').style.display = 'block';
+    }
+
+    // Verificar se o usuário já aceitou os cookies
+    const acceptedCookies = localStorage.getItem('acceptedCookies');
+    if (acceptedCookies !== 'true') {
+      document.getElementById('cookieConsent').style.display = 'block';
+    } else {
+      loadTasks(); // Carregar as tarefas se os cookies já foram aceitos
+    }
+  </script>
+</body>
+</html>
